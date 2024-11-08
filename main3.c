@@ -2,52 +2,52 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/wait.h>
-#include <time.h>
-
-// Function for the child processes
-void child_process() {
-    int iterations = random() % 30 + 1; // Random number of iterations (1 to 30)
-
-    for (int i = 0; i < iterations; i++) {
-        printf("Child Pid: %d is going to sleep!\n", getpid());
-
-        int sleep_time = random() % 10 + 1; // Sleep for random time (1 to 10 seconds)
-        sleep(sleep_time);
-
-        printf("Child Pid: %d is awake! Where is my Parent: %d?\n", getpid(), getppid());
-    }
-
-    exit(0); // Terminate the child process
-}
+#include <sys/types.h>  // Required for pid_t
+#include <time.h>       // Required for time()
 
 int main() {
-    srandom(time(NULL)); // Seed the random number generator with current time
+    pid_t pid1, pid2;
+    int status;
 
-    // Create the first child process
-    pid_t pid1 = fork();
+    // Seed the random number generator
+    srand(time(NULL));
 
-    if (pid1 == 0) {
-        // First child process
-        child_process();
-    } else {
-        // Parent process creates second child process
-        pid_t pid2 = fork();
+    // Create first child process
+    pid1 = fork();
 
-        if (pid2 == 0) {
-            // Second child process
-            child_process();
-        } else {
-            // Parent process waits for both children to complete
-            int status;
-            pid_t completed_pid;
-
-            completed_pid = wait(&status);
-            printf("Child Pid: %d has completed\n", completed_pid);
-
-            completed_pid = wait(&status);
-            printf("Child Pid: %d has completed\n", completed_pid);
+    if (pid1 == 0) {  // Child 1 process
+        int iterations = rand() % 30;  // Random iterations, max 30
+        int i;  // Declare i outside the loop
+        for (i = 0; i < iterations; i++) {
+            printf("Child 1 Pid: %d is going to sleep!\n", getpid());
+            sleep(rand() % 10);  // Sleep for random time (max 10 seconds)
+            printf("Child 1 Pid: %d is awake!\n", getpid());
+            printf("Where is my Parent: %d?\n", getppid());
         }
+        exit(0);
     }
+
+    // Create second child process
+    pid2 = fork();
+
+    if (pid2 == 0) {  // Child 2 process
+        int iterations = rand() % 30;  // Random iterations, max 30
+        int i;  // Declare i outside the loop
+        for (i = 0; i < iterations; i++) {
+            printf("Child 2 Pid: %d is going to sleep!\n", getpid());
+            sleep(rand() % 10);  // Sleep for random time (max 10 seconds)
+            printf("Child 2 Pid: %d is awake!\n", getpid());
+            printf("Where is my Parent: %d?\n", getppid());
+        }
+        exit(0);
+    }
+
+    // Parent process waits for both child processes to terminate
+    waitpid(pid1, &status, 0);  // Wait for Child 1
+    printf("Child Pid: %d has completed\n", pid1);
+
+    waitpid(pid2, &status, 0);  // Wait for Child 2
+    printf("Child Pid: %d has completed\n", pid2);
 
     return 0;
 }
